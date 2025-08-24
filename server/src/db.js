@@ -2,17 +2,21 @@
 import mysql from 'mysql2/promise';
 
 const cfg = {
-  host: process.env.MYSQL_HOST || '127.0.0.1',
-  port: Number(process.env.MYSQL_PORT || 3306),
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DB,
+  host: '127.0.0.1',          // force TCP, avoid socket
+  port: 3306,
+  user: 'dropx',
+  password: 'Souravsingh3614@',
+  database: 'dropx_mvp',
   waitForConnections: true,
   connectionLimit: 10,
   decimalNumbers: true,
 };
 
-// TEMP diag: show what we actually use (no password).
-console.log('[DB] cfg:', { ...cfg, password: cfg.password ? '***' : '(empty)' });
+// mask password in logs
+console.log('[DB] cfg:', { ...cfg, password: '***' });
 
-export const pool = mysql.createPool(cfg);
+const pool = mysql.createPool(cfg);
+
+// Export BOTH named and default, so any import style will work.
+export { pool };
+export default pool;
