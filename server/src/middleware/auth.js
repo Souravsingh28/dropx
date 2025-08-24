@@ -1,11 +1,27 @@
+// src/middleware/auth.js
 import jwt from 'jsonwebtoken';
-export function auth(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ error: 'Missing Authorization header' });
-  const token = header.replace('Bearer ', '');
+
+/**
+ * Verifies "Authorization: Bearer <token>" and attaches payload to req.user
+ * Your login should sign with the same secret.
+ */
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+export default function requireAuth(req, res, next) {
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // { id, id_number, role }
+    const hdr = req.headers['authorization'] || '';
+    const m = hdr.match(/^Bearer\s+(.+)$/i);
+    if (!m) return res.status(401).json({ error: 'Missing Authorization header' });
+
+    const token = m[1];
+    const payload = jwt.verify(token, JWT_SECRET);
+    // expected at least { id, role }
+    if (!payload || !payload.id || !payload.role) {
+      return res.status(401).json({ error: 'Invalid token payload' });
+    }
+    req.user = payload;
     next();
-  } catch (e) { return res.status(401).json({ error: 'Invalid or expired token' }); }
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
 }
