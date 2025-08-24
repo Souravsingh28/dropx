@@ -1,16 +1,16 @@
-// server/src/routes/me.routes.js
+// /opt/dropx/server/src/routes/me.routes.js
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { q } from '../utils/sql.js';
-import { auth } from '../middleware/auth.js';
+import requireAuth from '../middleware/auth.js';
 
 const router = Router();
 
 /**
  * GET /api/me
- * Returns the current user's profile
+ * Returns the current user's profile.
  */
-router.get('/', auth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id;
     const rows = await q(
@@ -30,9 +30,10 @@ router.get('/', auth, async (req, res) => {
 
 /**
  * PUT /api/me
- * Optional: allow self-updates for safe fields
+ * Allow self-updates for safe fields.
+ * Body can include: name, age, gender, phone, bank_account, ifsc, photo_url
  */
-router.put('/', auth, async (req, res) => {
+router.put('/', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id;
     const allowed = ['name', 'age', 'gender', 'phone', 'bank_account', 'ifsc', 'photo_url'];
@@ -44,7 +45,6 @@ router.put('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
-    // Build dynamic SQL
     const fields = Object.keys(updates).map(k => `${k}=?`).join(', ');
     const params = [...Object.values(updates), userId];
     await q(pool, `UPDATE users SET ${fields} WHERE id=?`, params);
